@@ -8,12 +8,15 @@ task indexfilterconversion {
 
     command <<<
         set -euo pipefail
-        #bcftools index inputvcf_file
-        #name_prefix="${inputvcf_file%.dose.vcf}"
-        #bcftools view -i 'R2>~{imp_info_argument} & MAF[0]>~{MAF_threshold_argument}' ~{inputvcf_file} | bgzip > ${name_prefix}.MAF_Rsq_filtered.vcf.gz
-        #bcftools index ${name_prefix}.MAF_Rsq_filtered.vcf.gz
-        #/qctool_v2.2.0-CentOS\ Linux7.8.2003-x86_64/./qctool -g ${name_prefix}.MAF_Rsq_filtered.vcf.gz -vcf-genotype-field GP -og ${name_prefix}_R2gt0.3_AND_MAFgt0.001.bgen
-        touch test_R2gt0.3_AND_MAFgt0.001.bgen
+        bcftools index ~{inputvcf_file}
+
+
+        tempvcf=~{inputvcf_file}
+        filename=$(basename "$tempvcf")
+        name_prefix="${filename%.dose.vcf}"
+        bcftools view -i 'R2>~{imp_info_argument} & MAF[0]>~{MAF_threshold_argument}' ~{inputvcf_file} | bgzip > ${name_prefix}.MAF_Rsq_filtered.vcf.gz
+        bcftools index ${name_prefix}.MAF_Rsq_filtered.vcf.gz
+        /Users/shahzada/Documents/git_practice/adni_imputed_data/qctool_v2.2.1-osx/./qctool -g ${name_prefix}.MAF_Rsq_filtered.vcf.gz -vcf-genotype-field GP -og ${name_prefix}_R2gt0.3_AND_MAFgt0.001.bgen
     >>>
 
     output {
