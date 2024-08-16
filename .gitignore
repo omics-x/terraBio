@@ -1,1 +1,5 @@
-*.pdf
+/cromwell-executions
+/cromwell-workflow-logs
+inputs.json
+womtool-87.jar
+cromwell-87.jar

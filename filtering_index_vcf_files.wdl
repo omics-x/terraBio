@@ -1,91 +1,47 @@
 version 1.0
-task indexingvcf {
+task indexfilterconversion {
     input {
-        Array[File] vcfFileforindex
+        File inputvcf_file
+        Float MAF_threshold_argument
+        Float imp_info_argument
     }
 
     command <<<
-            bcftools index vcfFileforindex
+        set -euo pipefail
+        #bcftools index inputvcf_file
+        #name_prefix="${inputvcf_file%.dose.vcf}"
+        #bcftools view -i 'R2>~{imp_info_argument} & MAF[0]>~{MAF_threshold_argument}' ~{inputvcf_file} | bgzip > ${name_prefix}.MAF_Rsq_filtered.vcf.gz
+        #bcftools index ${name_prefix}.MAF_Rsq_filtered.vcf.gz
+        #/qctool_v2.2.0-CentOS\ Linux7.8.2003-x86_64/./qctool -g ${name_prefix}.MAF_Rsq_filtered.vcf.gz -vcf-genotype-field GP -og ${name_prefix}_R2gt0.3_AND_MAFgt0.001.bgen
+        touch test_R2gt0.3_AND_MAFgt0.001.bgen
     >>>
 
     output {
-        Array[File] indexedvcf = glob(*vcfFileforindex*)
+        Array[File] filtered_bgenfiles = glob("*._R2gt0.3_AND_MAFgt0.001.bgen")
     }
 
     runtime {
-        docker: "?"
+    #    docker: "?"
         memory: "60G"
         disks: "local-disk 60 HDD"
     }
 }
 
-task  filteringvcf {
-    input {
-        Array[File] indexedvcfforfiltering
-        Float MAF_threshold_forfiltering
-        Float imputation_Info_forfiltering
-    }
-
-    command <<<
-        set -euo pipefail
-        for i in 1...2;do
-        bcftools view -i 'R2>~{MAF_threshold_forfiltering} & MAF[0]>~{imputation_Info_forfiltering}' ~{indexedvcfforfiltering} | bgzip > chr{i}.MAF_Rsq_filtered.vcf.gz
-        bcftools index chr{i}.MAF_Rsq_filtered.vcf.gz
-        done
-    >>>
-
-    output {
-        Array[File] filtered_vcf_files = glob("*MAF_Rsq_filtered.vcf.gz")
-    }
-    runtime {
-        docker: " "
-        memory: "60G"
-        disks: "local-disk 40 HDD"
-    }
-}
-
-task  conversiontobgen {
-    input {
-        Array[File] vcfforconverion
-
-    }
-
-    command <<<
-        CHR=`echo $file | cut -d '/' -f6 | cut -d '.' -f1`
-        /qctool_v2.2.0-CentOS\ Linux7.8.2003-x86_64/./qctool -g $file -vcf-genotype-field GP -og ${CHR}.dose.filtered_vcf_R2gt0.3_AND_MAFgt0.001.bgen
-    done
-
-    >>>
-    output {
-        Array[File] output_vcf2 = glob("*MAF_Rsq_filtered.vcf.gz")
-    }
-    runtime {
-        docker: ""
-        memory: "60G"
-        disks: "local-disk 40 HDD"
-    }
-}
-
-
 workflow preprocessImputedVCF{
     input {
-        Array[File] vcfFile
+        Array[File] vcfFiles
         Float MAF_threshold
-        Float imputation_Info
+        Float imp_info
     }
-call indexingvcf {
-          input:
-            vcfFileforindex = vcfFile,
+    scatter(vcf in vcfFiles){
+
+        call indexfilterconversion {
+            input:
+                inputvcf_file = vcf,
+                MAF_threshold_argument = MAF_threshold,
+                imp_info_argument = imp_info
+            }
         }
-call filteringvcf {
-          input:
-            indexedvcfforfiltering = indexingvcf.indexedvcf,
-            MAF_threshold_forfiltering = MAF_threshold,
-            imputation_Info_forfiltering = imputation_Info
-        }
-call conversiontobgen {
-          input:
-            vcfforconverion = filteringvcf.filtered_vcf_files
-        }
+         Array[File] bgenfiles = flatten(indexfilterconversion.filtered_bgenfiles)
     }
-}
+   
