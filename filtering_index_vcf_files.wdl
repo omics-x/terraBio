@@ -20,7 +20,7 @@ task indexfilterconversion {
     >>>
 
     output {
-        Array[File] filtered_bgenfiles = glob("*._R2gt0.3_AND_MAFgt0.001.bgen")
+        Array[File] filtered_bgenfiles = glob("*_R2gt0.3_AND_MAFgt0.001.bgen")
     }
 
     runtime {
@@ -46,5 +46,8 @@ workflow preprocessImputedVCF{
             }
         }
          Array[File] bgenfiles = flatten(indexfilterconversion.filtered_bgenfiles)
+         output{
+            Array[File] filteredbgenfiles = bgenfiles
+         }
     }
    
