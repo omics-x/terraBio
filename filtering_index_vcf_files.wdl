@@ -16,7 +16,7 @@ task indexfilterconversion {
         name_prefix="${filename%.dose.vcf}"
         bcftools view -i 'R2>~{imp_info_argument} & MAF[0]>~{MAF_threshold_argument}' ~{inputvcf_file} | bgzip > ${name_prefix}.MAF_Rsq_filtered.vcf.gz
         bcftools index ${name_prefix}.MAF_Rsq_filtered.vcf.gz
-        /Users/shahzada/Documents/git_practice/adni_imputed_data/qctool_v2.2.1-osx/./qctool -g ${name_prefix}.MAF_Rsq_filtered.vcf.gz -vcf-genotype-field GP -og ${name_prefix}_R2gt0.3_AND_MAFgt0.001.bgen
+        /tools/qctool -g ${name_prefix}.MAF_Rsq_filtered.vcf.gz -vcf-genotype-field GP -og ${name_prefix}_R2gt0.3_AND_MAFgt0.001.bgen
     >>>
 
     output {
@@ -24,7 +24,7 @@ task indexfilterconversion {
     }
 
     runtime {
-    #    docker: "?"
+        docker: "ghcr.io/omics-x/bcfnqctools:v1"
         memory: "60G"
         disks: "local-disk 60 HDD"
     }
